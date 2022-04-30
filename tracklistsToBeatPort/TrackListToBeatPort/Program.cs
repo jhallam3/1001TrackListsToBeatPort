@@ -16,6 +16,11 @@ namespace TrackListToBeatPort
             var filename = Guid.NewGuid() + ".html";
             System.IO.File.WriteAllText(filename, html);
 
+            //get track object 
+
+            //var trackAsDatatype = new TrackListsToBeatPortClass.Class1().ReturnHTracksOfListsOfTracks(tracks);
+            
+            // end get track object
             try
             {
                 Process.Start(filename);
