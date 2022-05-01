@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using System.Net;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Xml;
+using System.Xml.Serialization;
 using HtmlAgilityPack;
 using RestSharp;
 
@@ -27,8 +29,25 @@ namespace TrackListsToBeatPortClass
             return LS.ToArray();
         }
 
-        public string ReturnHTMLOfListsOfTracks(string[] Tracks, string tracklistingName)
+        public string ReturnHTMLOfListsOfTracks(Track[] Tracks, string tracklistingName)
         {
+            var exportcollectionExists = System.IO.File.Exists("collectionexport.xml");
+            DJ_PLAYLISTS djPlaylist = null;
+            if (exportcollectionExists == true)
+            {
+                var collectionExport = System.IO.File.ReadAllText("collectionexport.xml").Replace("\r\n", String.Empty);
+
+
+                XmlSerializer serializer = new XmlSerializer(typeof(DJ_PLAYLISTS));
+
+
+                using (StringReader reader = new StringReader(collectionExport))
+                {
+                    djPlaylist = (DJ_PLAYLISTS) serializer.Deserialize(reader);
+                }
+            }
+            
+
             string top ="<!DOCTYPE html><html><body><h2>" +tracklistingName +"</h2>";
             string bottom = "</body></html>";
             List<string> LS = new List<string>();
@@ -40,11 +59,34 @@ namespace TrackListsToBeatPortClass
             
             foreach (var track in Tracks)
             {
-                var cleantrack = StripHTML(track).Trim();
-                var cleantrackForSearch = StripHTML(track).Trim().Replace("&", "%26").Replace(" ", "+");
-                string linkinner = "<li><a href=\"https://www.beatport.com/search?q="  +cleantrackForSearch + "\"" + ">" + cleantrack + "</a></li>" + System.Environment.NewLine;
+                
+                var cleantrack = new Strip().StripHTML(track.Artist).Trim() + " - " + new Strip().StripHTML(track.TrackName).Trim();
+                var cleantrackForSearch = new Strip().StripHTML(cleantrack).Trim().Replace("&", "%26").Replace(" ", "+");
+                var linkinner = "";
+                if (exportcollectionExists ==true)
+                {
+                    var trackexists = new SearchExistingTrackInRecordBox().Search(djPlaylist, track.TrackName);
+                    if (trackexists.Found == true)
+                    {
+                        linkinner = "<li><a href=\"https://www.beatport.com/search?q="  +cleantrackForSearch + "\"" + ">" + cleantrack + "</a><p>Exists in RecordBox "+ new TracksToHTMLTable().HTMLTable(trackexists.Tracks) + "</P></li>" + System.Environment.NewLine;
+                    }
+                    else
+                    {
+                        linkinner = "<li><a href=\"https://www.beatport.com/search?q="  +cleantrackForSearch + "\"" + ">" + cleantrack + "</a></li>" + System.Environment.NewLine;
+                    }
+                }
+
+                else
+                {
+                    linkinner = "<li><a href=\"https://www.beatport.com/search?q="  +cleantrackForSearch + "\"" + ">" + cleantrack + "</a></li>" + System.Environment.NewLine;
+                }
+                
+                
+                
                 link = link + linkinner;
-                LS.Add(track);
+                
+                
+                
             }
 
             html = html + link;
@@ -81,18 +123,11 @@ namespace TrackListsToBeatPortClass
             return TrackList.ToArray();
         }
         
-        public static string StripHTML(string input)
-        {
-            return Regex.Replace(input, "<.*?>", String.Empty);
-        }
         
-        public class Track
-        {
-            public string TrackName { get; set; }
-            public string Artist { get; set; }
-            public string RecordLabel { get; set; }
-            
-        }
+        
+        
+        
+        
         
         
     }
