@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Diagnostics;
 using System.IO;
+using System.Runtime.InteropServices;
 using System.Xml.Serialization;
 using TrackListsToBeatPortClass;
 
@@ -24,6 +25,7 @@ namespace TrackListToBeatPort
             var html = new TrackListsToBeatPortClass.Class1().ReturnHTMLOfListsOfTracks(trackAsDatatype, url);
             var filename = Guid.NewGuid() + ".html";
             System.IO.File.WriteAllText(filename, html);
+            
 
            
             try
@@ -33,6 +35,10 @@ namespace TrackListToBeatPort
             catch (Exception e)
             {
                 Console.WriteLine("open this file " + System.Environment.CurrentDirectory  + Path.DirectorySeparatorChar + filename );
+                if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
+                {
+                    Console.WriteLine("open this file file://" + System.Environment.CurrentDirectory  + Path.DirectorySeparatorChar + filename );
+                }
             }
         }
     }

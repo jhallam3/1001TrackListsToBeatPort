@@ -8,7 +8,11 @@ namespace TrackListsToBeatPortClass
     {
         public FoundTracks Search(DJ_PLAYLISTS Playlist, string title)
         {
-            var list =Playlist.COLLECTION.TRACK.Where(x => x.Name == title).ToArray();
+            if (title.Contains("("))
+            {
+                title = title.Split("(").First().Trim();
+            }
+            var list =Playlist.COLLECTION.TRACK.Where(x => x.Name.Contains(title)).ToArray();
             if (list.Length > 0)
             {
                 return new FoundTracks()
